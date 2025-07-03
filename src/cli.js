@@ -6,6 +6,7 @@ import { Command } from 'commander'; // For CLI parsing
 // Import the ASCII art banner and quotes from separate modules
 import { banner } from './asciiArt.js'; // ASCII art
 import { quotes } from './quotes.js'; // Funny quotes
+import { parseFile } from './parser.js'; // Import the parser
 
 // Create a new Command instance
 const program = new Command();
@@ -39,6 +40,30 @@ program
     console.log(getRandomQuote());
     // Main greeting
     console.log(chalk.green('Welcome to mockMeDaddy!'));
+  });
+
+// Add the 'parse' subcommand to expose the parser via CLI
+program
+  .command('parse <file>')
+  .description('Parse a JS file and print exported function metadata as JSON')
+  .action((file) => {
+    try {
+      // Call the parser and print the result as formatted JSON
+      const result = parseFile(file);
+      console.log(JSON.stringify(result, null, 2));
+      // Print a summary message for user-friendliness
+      if (result.functions.length === 0) {
+        // Beginners: Use chalk.yellow for warnings
+        console.log(chalk.yellow('⚠️  No exported functions found in this file.'));
+      } else {
+        // Beginners: Use chalk.green for success messages
+        console.log(chalk.green(`✅ Found ${result.functions.length} exported function(s).`));
+      }
+    } catch (err) {
+      // Print a user-friendly error message in red
+      console.error(chalk.red('Error parsing file:'), err.message);
+      process.exit(1);
+    }
   });
 
 // Parse the CLI arguments
