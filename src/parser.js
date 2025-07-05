@@ -13,8 +13,9 @@ import recast from 'recast';
 export function parseFile(filePath) {
   // Read the file contents
   const code = fs.readFileSync(filePath, 'utf-8');
-  // Parse the code into an AST
-  const ast = recast.parse(code, { parser: require('recast/parsers/babel') });
+  // Parse the code into an AST (Babel is default in recast v0.20+)
+  // Beginners: No need for require('recast/parsers/babel') in ESM; recast uses Babel by default
+  const ast = recast.parse(code);
   const functions = [];
 
   // Helper to extract JSDoc from node

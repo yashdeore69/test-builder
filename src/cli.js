@@ -7,6 +7,7 @@ import { Command } from 'commander'; // For CLI parsing
 import { banner } from './asciiArt.js'; // ASCII art
 import { quotes } from './quotes.js'; // Funny quotes
 import { parseFile } from './parser.js'; // Import the parser
+import { buildPrompt } from './promptBuilder.js'; // Import the prompt builder
 
 // Create a new Command instance
 const program = new Command();
@@ -62,6 +63,48 @@ program
     } catch (err) {
       // Print a user-friendly error message in red
       console.error(chalk.red('Error parsing file:'), err.message);
+      process.exit(1);
+    }
+  });
+
+// Add the 'gen' command for generating tests
+program
+  .command('gen <file>')
+  .description('Generate Jest tests for exported functions in a JS file')
+  .option('--prompt-debug', 'Print the generated prompt and exit (for debugging)')
+  .action((file, options) => {
+    try {
+      // Parse the file to get function metadata
+      const result = parseFile(file);
+      
+      if (result.functions.length === 0) {
+        console.error(chalk.red('No exported functions found in this file.'));
+        process.exit(1);
+      }
+      
+      // For now, use the first function found
+      const funcMeta = result.functions[0];
+      console.log(chalk.blue(`📝 Building prompt for function: ${funcMeta.name}`));
+      
+      // Build the prompt using the prompt builder
+      const prompt = buildPrompt(funcMeta, options);
+      
+      if (options.promptDebug) {
+        // Beginners: --prompt-debug flag shows the prompt without calling GPT
+        console.log(chalk.cyan('\n🔍 Generated Prompt:'));
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(prompt);
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(chalk.green('✅ Prompt debug complete. Exiting.'));
+        return;
+      }
+      
+      // TODO: In Day 4, this will call GPT to generate tests
+      console.log(chalk.yellow('🚧 Test generation not yet implemented (Day 4 task)'));
+      console.log(chalk.blue('💡 Use --prompt-debug to see the prompt that would be sent to GPT'));
+      
+    } catch (err) {
+      console.error(chalk.red('Error generating tests:'), err.message);
       process.exit(1);
     }
   });
