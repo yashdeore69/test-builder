@@ -4,7 +4,7 @@ A fun, open-source CLI tool to help you generate and test code with style! Now f
 
 - 🎨 ASCII art splash screen and fun random quotes
 - 🧑‍💻 `parse <file>` command: Extracts exported functions (name, params, JSDoc) from JavaScript files
-- 🤖 `gen <file>` command: Generates Jest test prompts using function metadata
+- 🤖 `gen <file>` command: Generates Jest tests using GPT API (with mock response for development)
 - 🧪 Unit tests with Jest for all core functionality
 - 🛡️ User-friendly error handling and colored output
 - 🏗️ Modular codebase for easy extension
@@ -45,7 +45,7 @@ node src/cli.js parse path/to/yourfile.js
 ✅ Found 2 exported function(s).
 ```
 
-### Generate Jest test prompts
+### Generate Jest tests
 ```sh
 node src/cli.js gen path/to/yourfile.js
 ```
@@ -53,6 +53,11 @@ node src/cli.js gen path/to/yourfile.js
 ### Debug the generated prompt
 ```sh
 node src/cli.js gen path/to/yourfile.js --prompt-debug
+```
+
+**Note:** You'll need to set up your Cursor AI API key in a `.env` file:
+```sh
+CURSOR_API_KEY=your_api_key_here
 ```
 
 **Example prompt output:**
@@ -108,7 +113,8 @@ npm test
 - ✅ **Day 1**: ASCII art, quotes, CLI structure
 - ✅ **Day 2**: Function parser with `recast`
 - ✅ **Day 3**: Prompt builder and Jest integration
-- 🚧 **Day 4**: Cursor AI Integration (coming next)
+- ✅ **Day 4 Task 1**: Cursor AI Integration - API client setup
+- 🚧 **Day 4 Task 2**: Error handling & retries (coming next)
 
 ## Project Structure
 ```
@@ -116,6 +122,7 @@ src/
 ├── cli.js          # Main CLI interface
 ├── parser.js       # Function parsing logic
 ├── promptBuilder.js # Jest prompt generation
+├── gptClient.js    # GPT API integration
 ├── asciiArt.js     # ASCII art banner
 └── quotes.js       # Fun random quotes
 ```
