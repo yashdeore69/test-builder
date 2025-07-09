@@ -9,6 +9,9 @@ import { quotes } from './quotes.js'; // Funny quotes
 import { parseFile } from './parser.js'; // Import the parser
 import { buildPrompt } from './promptBuilder.js'; // Import the prompt builder
 import { generateTest } from './gptClient.js'; // Import the GPT client
+import fs from 'fs'; // For file operations
+import path from 'path'; // For handling file paths
+import { spawn } from 'child_process'; // For running jest
 
 // Create a new Command instance
 const program = new Command();
@@ -73,6 +76,9 @@ program
   .command('gen <file>')
   .description('Generate Jest tests for exported functions in a JS file')
   .option('--prompt-debug', 'Print the generated prompt and exit (for debugging)')
+  .option('--overwrite', 'Overwrite the test file if it already exists')
+  .option('--dry-run', 'Show the file path and contents without writing to disk')
+  .option('--run', 'Run jest --coverage after writing the test file')
   .action(async (file, options) => {
     try {
       // Parse the file to get function metadata
@@ -104,13 +110,54 @@ program
       console.log(chalk.blue('🚀 Calling GPT to generate tests...'));
       const testCode = await generateTest(prompt);
       
-      // Display the generated test code
-      console.log(chalk.green('\n📝 Generated Test Code:'));
-      console.log(chalk.gray('─'.repeat(50)));
-      console.log(chalk.cyan(testCode));
-      console.log(chalk.gray('─'.repeat(50)));
-      console.log(chalk.green('✅ Test generation complete!'));
+      // Beginners: Write the generated test code to a file in __tests__
+      const baseName = path.basename(file, path.extname(file));
+      const testDir = path.join(process.cwd(), '__tests__');
+      const testFilePath = path.join(testDir, `${baseName}.test.js`);
+      // Ensure __tests__ directory exists
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir);
+      }
+      let testFileWritten = false;
+      // Dry-run: show file path and contents, but do not write
+      if (options.dryRun) {
+        console.log(chalk.yellow(`\n[DRY RUN] Test file would be saved to: ${testFilePath}`));
+        console.log(chalk.yellow('[DRY RUN] File contents:'));
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(chalk.cyan(testCode));
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(chalk.green('✅ Dry run complete. No files were written.'));
+      } else if (fs.existsSync(testFilePath) && !options.overwrite) {
+        // Idempotent write: check if file exists and handle overwrite
+        // Beginners: Warn the user and skip writing
+        console.log(chalk.yellow(`⚠️  Test file already exists: ${testFilePath}`));
+        console.log(chalk.yellow('Use --overwrite to overwrite the existing test file. Skipping write.'));
+      } else {
+        // Write the test code to the file (overwrite if exists or --overwrite is set)
+        fs.writeFileSync(testFilePath, testCode, 'utf-8');
+        testFileWritten = true;
+        // Display the generated test code and file path
+        console.log(chalk.green('\n📝 Generated Test Code:'));
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(chalk.cyan(testCode));
+        console.log(chalk.gray('─'.repeat(50)));
+        console.log(chalk.green(`✅ Test generation complete! Test file saved to: ${testFilePath}`));
+      }
       console.log(chalk.blue('💡 Use --prompt-debug to see the prompt that was sent to GPT'));
+
+      // If --run is set and a test file was written, run jest --coverage
+      if (options.run && testFileWritten) {
+        console.log(chalk.blue('\n▶️ Running jest --coverage...'));
+        // Beginners: Use spawn to run jest as a child process
+        const jest = spawn('npx', ['jest', '--coverage'], { stdio: 'inherit' });
+        jest.on('close', (code) => {
+          if (code === 0) {
+            console.log(chalk.green('✅ Jest coverage run complete!'));
+          } else {
+            console.log(chalk.red('❌ Jest coverage run failed.'));
+          }
+        });
+      }
       
     } catch (err) {
       console.error(chalk.red('Error generating tests:'), err.message);

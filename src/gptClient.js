@@ -14,27 +14,63 @@ dotenv.config();
  * @returns {Promise<string>} The generated test code
  */
 export async function generateTest(prompt) {
-  // Beginners: Check if API key is configured
-  const apiKey = process.env.CURSOR_API_KEY;
-  if (!apiKey) {
-    throw new Error('CURSOR_API_KEY not found in environment variables. Please add it to your .env file.');
+  // Beginners: Check for OpenRouter or Cursor AI API key
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const cursorKey = process.env.CURSOR_API_KEY;
+
+  if (!openrouterKey && !cursorKey) {
+    throw new Error('No API key found. Please add OPENROUTER_API_KEY or CURSOR_API_KEY to your .env file.');
   }
 
   // Beginners: Create a spinner for user feedback
   const spinner = ora('🤖 Generating tests with GPT...').start();
 
   try {
-    // Beginners: Make API call to Cursor AI (simulated for now)
-    // In a real implementation, this would call the actual Cursor AI API
-    const testCode = await callCursorAPI(prompt, apiKey);
-    
+    let testCode;
+    if (openrouterKey) {
+      // If OpenRouter API key is present, use OpenRouter
+      testCode = await callOpenRouterAPI(prompt, openrouterKey);
+    } else {
+      // Otherwise, use Cursor AI
+      testCode = await callCursorAPI(prompt, cursorKey);
+    }
     spinner.succeed('✅ Tests generated successfully!');
     return testCode;
-    
   } catch (error) {
     spinner.fail('❌ Failed to generate tests');
     throw error;
   }
+}
+
+/**
+ * Makes the actual API call to OpenRouter
+ * @param {string} prompt - The prompt to send
+ * @param {string} apiKey - The OpenRouter API key
+ * @returns {Promise<string>} The generated test code
+ */
+async function callOpenRouterAPI(prompt, apiKey) {
+  // Beginners: This is a placeholder for the real OpenRouter API call
+  // In production, you would use fetch/axios to POST to https://openrouter.ai/api/v1/chat/completions
+  // with the appropriate headers and body. See OpenRouter docs for details.
+
+  // Simulate API call with retry logic (same as Cursor for now)
+  const maxRetries = 2;
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // TODO: Replace this with actual OpenRouter API call
+      return generateMockTestResponse(prompt);
+    } catch (error) {
+      lastError = error;
+      if (attempt <= maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`⚠️  Attempt ${attempt} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw new Error(`OpenRouter API call failed after ${maxRetries + 1} attempts: ${lastError.message}`);
 }
 
 /**
