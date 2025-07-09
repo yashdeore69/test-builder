@@ -12,6 +12,9 @@ import { generateTest } from './gptClient.js'; // Import the GPT client
 import fs from 'fs'; // For file operations
 import path from 'path'; // For handling file paths
 import { spawn } from 'child_process'; // For running jest
+import { showIntro } from './ui/intro.js'; // For animated mascot intro
+import { showSuccess } from './ui/success.js'; // For success messages
+import { showError } from './ui/error.js'; // For error messages
 
 // Create a new Command instance
 const program = new Command();
@@ -23,13 +26,19 @@ function getRandomQuote() {
 
 // Print banner if no command is provided
 if (!process.argv.slice(2).length) {
-  // Print the banner in pink color using chalk's hex method
-  // Beginners: chalk.hex('#ff69b4') sets the text color to a pink shade
-  console.log(chalk.hex('#ff69b4')(banner));
-  // Fun splash message for mockMeDaddy
-  console.log(chalk.magentaBright('💥 mockMeDaddy is generating fake tests...'));
-  // Print a random funny quote
-  console.log(getRandomQuote());
+  // Show the animated mascot intro
+  showIntro();
+  // Print a random funny quote after the intro
+  setTimeout(() => {
+    console.log(getRandomQuote());
+    // Beginners: Wait a bit after the quote so users can see it before exiting
+    setTimeout(() => {
+      process.exit(0);
+    }, 2000); // Wait 2 seconds after quote
+  }, 2200); // Show quote after intro animation
+} else {
+  // Parse the CLI arguments
+  program.parse(process.argv);
 }
 
 // Define the 'testgen' command
@@ -164,9 +173,6 @@ program
       process.exit(1);
     }
   });
-
-// Parse the CLI arguments
-program.parse(process.argv);
 
 // Export the program for testing or extension
 export default program; 
